@@ -44,8 +44,8 @@ uploaded_file = st.file_uploader("Last opp Excel med oppskrifter", type=["xlsx"]
 if uploaded_file:
     recipes = load_data(uploaded_file)
 
-    st.subheader("📖 Oppskrifter")
-    st.dataframe(recipes.head())
+    # st.subheader("📖 Oppskrifter")
+    # st.dataframe(recipes.head())
 
     # Choose mode: random or manual
     mode = st.radio("Hvordan vil du lage menyen?", ["🎲 Tilfeldig meny", "✅ Velg retter selv"])
