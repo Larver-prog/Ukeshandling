@@ -3,6 +3,5 @@ pandas
 openpyxl
 aiohttp
 anyio
-os
 bring_api
 mashumaro
