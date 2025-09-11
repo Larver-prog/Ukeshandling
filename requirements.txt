@@ -5,3 +5,4 @@ aiohttp
 anyio
 bring_api
 mashumaro
+orjson
