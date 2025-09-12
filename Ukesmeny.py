@@ -102,22 +102,46 @@ if recipes is not None:
             available_dishes = recipes["Middagsrett"].unique().tolist()
             menu = random.sample(available_dishes, n_days)
 
+            # Save preliminary random menu
             df_menu = pd.DataFrame({"Dag": range(1, n_days+1), "Middagsrett": menu})
-            shopping_list = build_shopping_list(menu, recipes)
-
             st.session_state["ukesmeny"] = df_menu
-            st.session_state["shopping_list"] = shopping_list
+            st.session_state["shopping_list"] = build_shopping_list(menu, recipes)
 
-            menu_placeholder.table(df_menu)
-            shopping_placeholder.dataframe(shopping_list)
+        # If a random menu already exists, let user edit it
+        if "ukesmeny" in st.session_state:
+            available_dishes = ["Velg rett..."] + recipes["Middagsrett"].unique().tolist()
+            current_menu = st.session_state["ukesmeny"]["Middagsrett"].tolist()
+
+            edited_menu = []
+            for i, rett in enumerate(current_menu):
+                default_index = available_dishes.index(rett) if rett in available_dishes else 0
+                new_rett = st.selectbox(f"Dag {i+1}", available_dishes, index=default_index, key=f"edit_day_{i}")
+                edited_menu.append(new_rett if new_rett != "Velg rett..." else None)
+
+            if st.button("Oppdater meny"):
+                final_menu = [d for d in edited_menu if d is not None]
+                df_menu = pd.DataFrame({"Dag": range(1, len(final_menu)+1), "Middagsrett": final_menu})
+                shopping_list = build_shopping_list(final_menu, recipes)
+
+                st.session_state["ukesmeny"] = df_menu
+                st.session_state["shopping_list"] = shopping_list
+
+                menu_placeholder.table(df_menu)
+                shopping_placeholder.dataframe(shopping_list)
 
     elif mode == "✅ Velg retter selv":
-        available_dishes = recipes["Middagsrett"].unique().tolist()
-        chosen = st.multiselect("Velg retter:", available_dishes)
+        n_days = st.slider("Hvor mange middager vil du planlegge?", 1, 7, 5)
 
-        if chosen:
-            df_menu = pd.DataFrame({"Dag": range(1, len(chosen)+1), "Rett": chosen})
-            shopping_list = build_shopping_list(chosen, recipes)
+        available_dishes = ["Velg rett..."] + recipes["Middagsrett"].unique().tolist()
+        chosen = []
+        for i in range(n_days):
+            dish = st.selectbox(f"Velg rett for dag {i+1}", available_dishes, key=f"day_{i}")
+            chosen.append(dish if dish != "Velg rett..." else None)
+
+        if st.button("Lag meny"):
+            final_menu = [d for d in chosen if d is not None]
+            df_menu = pd.DataFrame({"Dag": range(1, len(final_menu)+1), "Middagsrett": final_menu})
+            shopping_list = build_shopping_list(final_menu, recipes)
 
             st.session_state["ukesmeny"] = df_menu
             st.session_state["shopping_list"] = shopping_list
@@ -138,6 +162,12 @@ if "ukesmeny" in st.session_state and "shopping_list" in st.session_state:
 
     with open("ukemeny.xlsx", "rb") as f:
         st.download_button("⬇️ Last ned meny + handleliste (Excel)", f, "ukemeny.xlsx")
+
+    # Add Clear Menu button
+    if st.button("🗑️ Tøm meny"):
+        st.session_state.pop("ukesmeny", None)
+        st.session_state.pop("shopping_list", None)
+        st.success("Meny og handleliste er tømt.")
 
 # -------------------------------
 # Bring! login section
